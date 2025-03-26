@@ -1,0 +1,17 @@
+<p-menubar [model]="menuItems" styleClass="border-none">
+
+  <ng-template #item let-item>
+    <a [routerLink]="item.routerLink" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}"  class="p-menubar-items cursor-pointer">
+      {{item.label}}
+    </a>
+  </ng-template>
+  <ng-template #end>
+    <button (click)="toggleDarkMode()" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+      Toggle Dark Mode
+    </button>
+
+  </ng-template>
+
+
+</p-menubar>
+

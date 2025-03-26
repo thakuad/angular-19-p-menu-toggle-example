@@ -1,0 +1,9 @@
+
+
+<p-menu [model]="menuItems">
+  <ng-template #item let-item>
+    <a [routerLink]="item.routerLink" routerLinkActive="bg-red-500" [routerLinkActiveOptions]="{exact: true}"  class="p-menubar-items cursor-pointer">
+      {{item.label}}
+    </a>
+  </ng-template>
+</p-menu>
