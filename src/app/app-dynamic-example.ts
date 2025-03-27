@@ -21,3 +21,23 @@ export class ParentComponent {
     console.log('Export logic here');
   }
 }
+
+<app-dynamic-table [data]="data" [columns]="columns">
+  <!-- Custom Global Filter -->
+  <ng-template #globalFilterTemplate let-applyGlobalFilter>
+    <p-dropdown 
+      [options]="[{ label: 'Admin', value: 'Admin' }, { label: 'User', value: 'User' }]"
+      placeholder="Filter by Role"
+      (onChange)="applyGlobalFilter($event.value, dt)">
+    </p-dropdown>
+  </ng-template>
+
+  <!-- Custom Export Button -->
+  <ng-template #exportButtonTemplate>
+    <button pButton label="Export" (click)="exportData()"></button>
+  </ng-template>
+</app-dynamic-table>
+
+
+
+
