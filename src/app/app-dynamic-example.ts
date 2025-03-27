@@ -24,12 +24,15 @@ export class ParentComponent {
 
 <app-dynamic-table [data]="data" [columns]="columns">
   <!-- Custom Global Filter -->
-  <ng-template #globalFilterTemplate let-applyGlobalFilter>
+  <ng-template #globalFilterTemplate let-applyGlobalFilter let-dt="dt">
     <p-dropdown 
       [options]="[{ label: 'Admin', value: 'Admin' }, { label: 'User', value: 'User' }]"
       placeholder="Filter by Role"
-      (onChange)="applyGlobalFilter($event.value, dt)">
+      (onChange)="applyGlobalFilter($event.value)">
     </p-dropdown>
+
+    <!-- Clear Filters Button -->
+    <button pButton label="Clear Filters" (click)="dt.clear()"></button>
   </ng-template>
 
   <!-- Custom Export Button -->
@@ -37,7 +40,3 @@ export class ParentComponent {
     <button pButton label="Export" (click)="exportData()"></button>
   </ng-template>
 </app-dynamic-table>
-
-
-
-
