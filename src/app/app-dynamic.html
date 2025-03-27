@@ -1,20 +1,22 @@
 <div class="table-container">
-  <!-- Global Search & Custom Export Buttons -->
+  <!-- Global Search Input -->
   <div class="table-header">
     <input 
       pInputText 
       type="text"
-      (input)="applyGlobalFilter($event.target.value, dt)"
+      (input)="applyGlobalFilter($event.target.value)"
       placeholder="Global Search"
       class="p-inputtext-sm"
     />
 
-    <!-- Custom Global Filter Template (if provided) -->
+    <!-- Global Filter Template (Parent Component Injected) -->
     <ng-container *ngIf="globalFilterTemplate">
-      <ng-container *ngTemplateOutlet="globalFilterTemplate; context: { applyGlobalFilter: applyGlobalFilter }"></ng-container>
+      <ng-container 
+        *ngTemplateOutlet="globalFilterTemplate; context: { applyGlobalFilter: applyGlobalFilter, dt: table }">
+      </ng-container>
     </ng-container>
 
-    <!-- Custom Export Button Template (if provided) -->
+    <!-- Custom Export Button -->
     <ng-container *ngIf="exportButtonTemplate">
       <ng-container *ngTemplateOutlet="exportButtonTemplate"></ng-container>
     </ng-container>
