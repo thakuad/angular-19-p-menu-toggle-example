@@ -36,14 +36,16 @@
 
     <!-- Table Body -->
     <ng-template pTemplate="body" let-rowData>
-      <tr>
-        <td *ngFor="let col of columns">
-          <ng-container *ngIf="col.template; else defaultCell">
-            <ng-container *ngTemplateOutlet="col.template; context: { $implicit: rowData }"></ng-container>
-          </ng-container>
-          <ng-template #defaultCell>{{ rowData[col.field] }}</ng-template>
-        </td>
-      </tr>
-    </ng-template>
+  <tr>
+    <td *ngFor="let col of columns">
+      <ng-container *ngIf="col.template; else defaultCell">
+        <ng-container *ngTemplateOutlet="col.template; context: { $implicit: rowData }"></ng-container>
+      </ng-container>
+      <ng-template #defaultCell>
+        {{ getNestedValue(rowData, col.field as string) }}
+      </ng-template>
+    </td>
+  </tr>
+</ng-template>
   </p-table>
 </div>
