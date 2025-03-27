@@ -3,7 +3,7 @@ import { Table } from 'primeng/table';
 import { FilterService } from 'primeng/api';
 
 export interface ColumnConfig<T> {
-  field: keyof T; // Ensures the field exists in T
+  field: Extract<keyof T | string, string>;  // Ensures only valid field names
   header: string;
   sortable?: boolean;
   filterable?: boolean;
@@ -28,6 +28,11 @@ export class AppDynamicTableComponent<T extends object> {
   @ContentChild('exportButtonTemplate') exportButtonTemplate!: TemplateRef<any>;
 
   constructor(public filterService: FilterService) {}
+
+getNestedValue<T extends object, K extends keyof any>(obj: T, path: K): unknown {
+  return path.toString().split('.').reduce((acc: any, part) => acc && acc[part], obj);
+}
+
 
   applyGlobalFilter(filterValue: string) {
     if (this.table) {
