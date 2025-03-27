@@ -1,13 +1,13 @@
-import { Component, Input, ContentChild, TemplateRef, ViewChild } from '@angular/core';
+import { Component, Input, ContentChild, TemplateRef, ViewChild, Type } from '@angular/core';
 import { Table } from 'primeng/table';
 import { FilterService } from 'primeng/api';
 
-export interface ColumnConfig {
-  field: string;
+export interface ColumnConfig<T> {
+  field: keyof T; // Ensures the field exists in T
   header: string;
   sortable?: boolean;
   filterable?: boolean;
-  template?: TemplateRef<any>;
+  template?: TemplateRef<{ $implicit: T }>;
 }
 
 @Component({
@@ -16,9 +16,9 @@ export interface ColumnConfig {
   standalone: true,
   providers: [FilterService],
 })
-export class AppDynamicTableComponent {
-  @Input() data: any[] = [];
-  @Input() columns: ColumnConfig[] = [];
+export class AppDynamicTableComponent<T extends object> {  
+  @Input() data: T[] = []; // Now fully type-safe
+  @Input() columns: ColumnConfig<T>[] = [];
   @Input() expandable: boolean = false;
 
   @ViewChild('dt') table!: Table;
