@@ -1,11 +1,9 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {MenuItem} from 'primeng/api';
 import {MenuService} from '../../services/menu.service';
-import {ABOUT_MENU_ITEMS, ADMIN_MENU_ITEMS, SESSION_MENU_ITEMS} from '../../config/session-menu';
-import {EVENT_MENU_ITEMS} from '../../config/event-menu';
+import {ABOUT_MENU_ITEMS, ADMIN_MENU_ITEMS, } from '../../config/session-menu';
 import {MenubarModule} from 'primeng/menubar';
 import {RouterLink, RouterLinkActive} from '@angular/router';
-import {Button} from 'primeng/button';
 
 @Component({
   selector: 'app-top-header',
@@ -15,7 +13,6 @@ import {Button} from 'primeng/button';
     MenubarModule,
     RouterLink,
     RouterLinkActive,
-    Button
   ],
   standalone: true
 })

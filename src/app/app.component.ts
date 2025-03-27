@@ -4,18 +4,16 @@ import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { InputTextModule } from 'primeng/inputtext';
 import { MenubarModule } from 'primeng/menubar';
-import { MenuItem } from 'primeng/api';
 import {TopHeaderComponent} from './top-header/top-header.component';
 import {SidebarComponent} from './sidebar/sidebar.component';
-import {NgClass, NgIf} from '@angular/common';
-import {Sidebar} from 'primeng/sidebar';
+import { NgIf} from '@angular/common';
 import {MenuService} from '../services/menu.service';
 import {ThemeService} from '../config/theme.service';
 
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [ButtonModule, TextareaModule, InputTextModule, MenubarModule, TopHeaderComponent, SidebarComponent, RouterOutlet, NgClass, Sidebar, NgIf],
+  imports: [ButtonModule, TextareaModule, InputTextModule, MenubarModule, TopHeaderComponent, SidebarComponent, RouterOutlet, NgIf],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })

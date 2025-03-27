@@ -1,0 +1,91 @@
+<div class="table-container">
+  <!-- Global Search Input -->
+  <div class="table-header">
+    <!-- Global Filter Template (Parent Component Injected) -->
+  </div>
+
+  <!-- PrimeNG Table -->
+  <p-table
+    #dt
+    [dataKey]="dataKey"
+    [expandedRowKeys]="expandedRowKeys"
+    [paginator]="true"
+    [rows]="10"
+    [value]="data"
+    >>
+    <!-- Table Header -->
+    <ng-template pTemplate="header">
+      <tr>
+        <th *ngIf="expandable" style="width: 3rem"></th>
+        <th *ngFor="let col of columns">
+          {{ col.header }}
+          <p-sortIcon *ngIf="col.sortable" [field]="col.field"></p-sortIcon>
+        </th>
+      </tr>
+    </ng-template>
+
+    <!-- Table Body -->
+    <ng-template let-expanded="expanded" let-rowData pTemplate="body">
+      <tr>
+        <td *ngIf="expandable">
+          <button
+            (click)="toggleRow($event, rowData)"
+            [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+            [pRowToggler]="rowData"
+            class="p-button-text p-button-rounded p-button-plain"
+            pButton
+            type="button"
+          ></button>
+        </td>
+
+        <td *ngFor="let col of columns">
+          <ng-container *ngIf="hasCustomTemplate(col); else defaultCell">
+            <ng-container
+              [ngTemplateOutletContext]="{ $implicit: rowData, column: col }"
+              [ngTemplateOutlet]="getColumnTemplate(col.templateId!)!"
+            >
+            </ng-container>
+          </ng-container>
+          <!-- Default rendering if no template is provided for this column -->
+          <ng-template #defaultCell>
+            {{ getNestedValue(rowData, col.field) }}
+          </ng-template>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template let-rowData pTemplate="rowexpansion">
+      <tr>
+        <td [attr.colspan]="expandable ? columns.length + 1 : columns.length">
+          <div class="p-3">
+            <!-- Use provided expand template if available -->
+            <ng-container *ngIf="hasExpandTemplate(); else defaultExpand">
+              <ng-container
+                [ngTemplateOutletContext]="{ $implicit: rowData }"
+                [ngTemplateOutlet]="getExpandTemplate()"
+              >
+              </ng-container>
+            </ng-container>
+
+            <!-- Default expansion content -->
+            <ng-template #defaultExpand>
+              <div class="p-grid">
+                <div *ngFor="let col of columns" class="p-col-12 p-md-4">
+                  <strong>{{ col.header }}:</strong> {{ rowData[col.field] }}
+                </div>
+              </div>
+            </ng-template>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td [attr.colspan]="columns.length" class="text-center">
+          No records found
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
