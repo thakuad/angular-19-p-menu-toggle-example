@@ -1,15 +1,27 @@
 <app-dynamic-table
   #dt
   [columns]="columns"
-  [dataKey]="'id'"
   [data]="users"
-  [expandable]="true"
-  [expandedRowKeys]="expandedRows"
-  [globalFilterFields]="globalFilterFields"
-  [paginator]="true"
-  [rowsPerPageOptions]="[5, 10, 25]"
-  [rows]="5"
+  [initialFilterValue]="defaultFilter"
+
 >
+
+  <ng-template appColumnTemplate="filterTemplate" let-applyFilter="applyGlobalFilter" let-clear="clearTable">
+    <p-select #selectedValue (onChange)="applyFilter(selectedValue.value.code)" [options]="tableStatus"
+              class="w-full md:w-56"
+              optionLabel="name" placeholder="Select a City"/>
+    <button (click)="clear()" label="Clear Filters" pButton></button>
+
+  </ng-template>
+
+  <ng-template #globalFilterTemplate let-applyFilter="applyFilter" let-clear="clearTable">
+    Global
+    <p-select #selectedValue (onChange)="applyFilter(selectedValue.value.code)" [options]="tableStatus"
+              class="w-full md:w-56"
+              optionLabel="name" placeholder="Select a City"/>
+    <!--    <button (click)="dt.clear()" label="Clear Filters" pButton></button>-->
+
+  </ng-template>
   >
   <!-- Custom template for status column -->
   <!--  <ng-template appColumnTemplate="statusTemplate" let-user>-->
@@ -19,48 +31,17 @@
   <!-- Custom template for date column -->
 
   <ng-template appColumnTemplate="cityTemplate" let-user>
-    <span>{{ user.address.city }}</span>
-  </ng-template>
-  <ng-template appColumnTemplate="actionTemplate" let-user>
-    <p-button icon="pi pi-trash" />
-  </ng-template>
-  <ng-template appColumnTemplate="dateTemplate" let-user>
-    <span>{{ formatDate(user.lastLogin) }}</span>
-  </ng-template>
-
-  <!-- Custom template for expanded row content -->
-  <ng-template appColumnTemplate="expandTemplate" let-user>
-    <div class="expanded-row-content">
-      <h3>{{ user.name }} Details</h3>
-      <div class="p-grid">
-        <div class="p-col-12 p-md-6">
-          <h4>Contact Information</h4>
-          <p><strong>Email:</strong> {{ user.email }}</p>
-          <p>
-            <strong>Status:</strong>
-            <!--            <p-tag [value]="user.status" [severity]="getSeverity(user.status)"></p-tag>-->
-          </p>
-        </div>
-        <div class="p-col-12 p-md-6">
-          <h4>Address</h4>
-          <p><strong>City:</strong> {{ user.address.city }}</p>
-          <p><strong>Street:</strong> {{ user.address.street }}</p>
-        </div>
-      </div>
-      <div class="actions">
-        <button
-          class="p-button-sm p-button-outlined mr-2"
-          icon="pi pi-pencil"
-          label="Edit"
-          pButton
-        ></button>
-        <button
-          class="p-button-sm p-button-outlined p-button-danger"
-          icon="pi pi-trash"
-          label="Delete"
-          pButton
-        ></button>
-      </div>
+    <div class="flex flex-col">
+      @for (address of user.address; let i = $index; track address) {
+        <span>{{ i + 1 }} . {{ address.city }}</span>
+      }
     </div>
   </ng-template>
+  <ng-template appColumnTemplate="actionTemplate" let-user>
+    <p-button icon="pi pi-trash"/>
+  </ng-template>
+  <ng-template appColumnTemplate="dateTemplate" let-user>
+    <span>{{ user.lastLogin | date: "YYYY-MM-dd": "utc" }}</span>
+  </ng-template>
+
 </app-dynamic-table>
