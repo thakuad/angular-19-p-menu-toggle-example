@@ -9,6 +9,13 @@ interface Option {
 }
 
 
+
+this.someObservable$.subscribe(dataArray => {
+  this.userList = Array.from(new Set(dataArray.map(item => item.user)))
+    .map(user => ({ label: user, value: user }));
+});
+
+
 fetchOptions(): void {
     this.http.get<{ groups: string[] }>('/api/options').pipe(
       map(response => ({
