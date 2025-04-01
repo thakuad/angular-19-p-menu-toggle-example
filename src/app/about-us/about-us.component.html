@@ -1,47 +1,49 @@
-<app-dynamic-table
-  #dt
-  [columns]="columns"
-  [data]="users"
-  [initialFilterValue]="defaultFilter"
-
->
-
-  <ng-template appColumnTemplate="filterTemplate" let-applyFilter="applyGlobalFilter" let-clear="clearTable">
-    <p-select #selectedValue (onChange)="applyFilter(selectedValue.value.code)" [options]="tableStatus"
-              class="w-full md:w-56"
-              optionLabel="name" placeholder="Select a City"/>
-    <button (click)="clear()" label="Clear Filters" pButton></button>
-
-  </ng-template>
-
-  <ng-template #globalFilterTemplate let-applyFilter="applyFilter" let-clear="clearTable">
-    Global
-    <p-select #selectedValue (onChange)="applyFilter(selectedValue.value.code)" [options]="tableStatus"
-              class="w-full md:w-56"
-              optionLabel="name" placeholder="Select a City"/>
-    <!--    <button (click)="dt.clear()" label="Clear Filters" pButton></button>-->
-
-  </ng-template>
+<div class="p-4">
+  <app-dynamic-table
+    #dt
+    [columns]="columns"
+    [data]="allData"
   >
-  <!-- Custom template for status column -->
-  <!--  <ng-template appColumnTemplate="statusTemplate" let-user>-->
-  <!--    <p-tag [severity]="getSeverity(user.status)" [value]="user.status"> </p-tag>-->
-  <!--  </ng-template>-->
+    <ng-template appColumnTemplate="filterTemplate" let-activeFilters="activeFilters" let-applyFilter="applyFilter" let-clearTable="clearTable" let-data>
+      <div class="flex items-center gap-4">
+        <div class="flex gap-2">
+          <p-select #selectedValue
+                    (onChange)="selectedUser && applyFilter('John Doe', 'owner')"
+                    [(ngModel)]="selectedUser"
+                    [options]="users"
+                    class="w-full md:w-56"
+                    optionLabel="name"
+                    placeholder="Select a User"/>
 
-  <!-- Custom template for date column -->
+          <p-select #status
+                    (onChange)="selectedStatus && applyFilter(selectedStatus.name, 'status.type')"
+                    [(ngModel)]="selectedStatus"
+                    [options]="statusSelect"
+                    class="w-full md:w-56"
+                    optionLabel="name"
+                    placeholder="Select a status"/>
+        </div>
 
-  <ng-template appColumnTemplate="cityTemplate" let-user>
-    <div class="flex flex-col">
-      @for (address of user.address; let i = $index; track address) {
-        <span>{{ i + 1 }} . {{ address.city }}</span>
-      }
-    </div>
-  </ng-template>
-  <ng-template appColumnTemplate="actionTemplate" let-user>
-    <p-button icon="pi pi-trash"/>
-  </ng-template>
-  <ng-template appColumnTemplate="dateTemplate" let-user>
-    <span>{{ user.lastLogin | date: "YYYY-MM-dd": "utc" }}</span>
-  </ng-template>
+        <!-- Pretty Reset Button -->
+        <button
+          (click)="resetFilters()"
+          class="p-button-rounded p-button-outlined p-button-secondary"
+          icon="pi pi-refresh"
+          label="Reset Filters"
+          pButton
+        ></button>
+      </div>
+    </ng-template>
 
-</app-dynamic-table>
+    <ng-template appColumnTemplate="statusTemplate" let-rowData>
+      <span [ngClass]="{
+        'p-tag p-tag-success': rowData.status.type === 'Completed',
+        'p-tag p-tag-warning': rowData.status.type === 'In Progress',
+        'p-tag p-tag-danger': rowData.status.type === 'Pending'
+      }">
+        {{ rowData.status.type }}
+      </span>
+    </ng-template>
+  </app-dynamic-table>
+</div>
+

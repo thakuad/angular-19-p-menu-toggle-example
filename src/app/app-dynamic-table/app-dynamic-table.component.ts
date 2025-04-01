@@ -3,20 +3,25 @@ import {
   ViewChild,
   Input,
   ContentChildren,
-  QueryList,
-  OnInit,
-  AfterViewInit,
+  type QueryList,
+  type OnInit,
+  type AfterViewInit,
   ContentChild,
-  TemplateRef,
-  OnChanges,
-  SimpleChanges,
+  type TemplateRef,
+  type OnChanges,
+  type SimpleChanges,
 } from '@angular/core';
-import { Table, TableModule } from 'primeng/table';
+import { type Table, TableModule } from 'primeng/table';
 import { FilterService } from 'primeng/api';
 import { ColumnTemplateDirective } from './column-template.directive';
 import { InputText } from 'primeng/inputtext';
 import { NgForOf, NgIf, NgTemplateOutlet } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
+
+interface FilterCriteria {
+  field: string;
+  value: string;
+}
 
 @Component({
   selector: 'app-dynamic-table',
@@ -32,7 +37,6 @@ import { ButtonModule } from 'primeng/button';
     NgTemplateOutlet,
     ButtonModule,
   ],
-  // Inject PrimeNG FilterService
 })
 export class AppDynamicTableComponent
   implements OnInit, AfterViewInit, OnChanges
@@ -46,11 +50,14 @@ export class AppDynamicTableComponent
 
   @Input() columns: any[] = [];
   @Input() data: any[] = [];
+  @Input() globalFilter: string | string[] = []; // Accepts string or array
+  @Input() initialFilterValue = '';
 
-  @Input() filterValue: string[] = [];
-
-  // filters: any = {};
   filteredData: any[] = [];
+  filterValue = '';
+
+  // Store multiple filter criteria
+  activeFilters: Map<string, string> = new Map();
 
   constructor(private filterService: FilterService) {
     this.filterService.filters['customFilter'] = (
@@ -61,48 +68,141 @@ export class AppDynamicTableComponent
     };
   }
 
-  // getGlobalFilterFields(): string[] {
-  //   return this.columns.map((col) => col.field);
-  // }
-
-  ngOnInit() {}
+  ngOnInit() {
+    // Set the filter value from the input
+    if (this.initialFilterValue) {
+      this.filterValue = this.initialFilterValue;
+      this.activeFilters.set('global', this.initialFilterValue);
+    }
+  }
 
   ngAfterViewInit() {
     // Ensure that @ViewChild 'dt' (the table) is correctly initialized
     if (this.table) {
       console.log('Table initialized:', this.table);
-      this.applyFilter(this.filterValue);
+
+      setTimeout(() => {
+        if (this.initialFilterValue) {
+          this.applyGlobalFilter(this.initialFilterValue);
+        }
+      });
     }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     // Check if initialFilterValue has changed
-    if (changes['filterValue']) {
-      // this.applyFilter(this.initialFilterValue);
+    if (
+      changes['initialFilterValue'] &&
+      !changes['initialFilterValue'].firstChange
+    ) {
+      const newValue = changes['initialFilterValue'].currentValue;
+      if (newValue !== undefined && this.table) {
+        this.applyGlobalFilter(newValue);
+      }
+    }
+
+    // If data changes, reapply all active filters
+    if (changes['data'] && !changes['data'].firstChange) {
+      setTimeout(() => {
+        this.applyAllFilters();
+      });
     }
   }
 
-  // 🔥 Apply global filter using PrimeNG FilterService
-  applyGlobalFilter = (value: string): void => {
-    console.log('Filtered Value', value);
+  // Apply field-specific filter
+  applyFieldFilter(field: string, value: string): void {
+    console.log(`Applying field filter: ${field} = ${value}`);
     if (!this.table) return;
 
-    // if (value.trim() && this.initialFilterValue.trim() === '') {
-    //   console.log(this.initialFilterValue);
-    //   this.table.value = this.data;
-    // }
+    if (value && value.trim() !== '') {
+      // Store the filter
+      this.activeFilters.set(field, value.toLowerCase());
+    } else {
+      // Remove the filter if value is empty
+      this.activeFilters.delete(field);
+    }
 
-    // Use the FilterService to filter on flattened data
-    const filterValue = value.toLowerCase();
-    this.filteredData = this.data.filter((item) =>
-      this.flattenObject(item).some((field) =>
-        this.filterService.filters['customFilter'](field, filterValue),
-      ),
-    );
-    this.table.value = this.filteredData;
+    // Apply all active filters
+    this.applyAllFilters();
+  }
+
+  // Apply global filter using PrimeNG FilterService
+  applyGlobalFilter = (value: string): void => {
+    console.log('Applying global filter:', value);
+    if (!this.table) return;
+
+    // Store the global filter value
+    this.filterValue = value;
+
+    if (value && value.trim() !== '') {
+      this.activeFilters.set('global', value.toLowerCase());
+    } else {
+      this.activeFilters.delete('global');
+    }
+
+    // Apply all active filters
+    this.applyAllFilters();
   };
 
-  flattenObject(obj: any, prefix: string = ''): string[] {
+  // Apply all active filters
+  applyAllFilters(): void {
+    if (!this.table) return;
+
+    // If no active filters, show all data
+    if (this.activeFilters.size === 0) {
+      this.table.value = this.data;
+      return;
+    }
+
+    // Start with all data
+    let result = [...this.data];
+
+    // Apply each filter in sequence
+    this.activeFilters.forEach((filterValue, field) => {
+      if (field === 'global') {
+        // Global filter searches across all fields
+        result = result.filter((item) =>
+          this.flattenObject(item).some((flatField) =>
+            this.filterService.filters['customFilter'](flatField, filterValue),
+          ),
+        );
+      } else {
+        // Field-specific filter
+        result = result.filter((item) => {
+          const fieldValue = this.getNestedValue(item, field);
+
+          // Handle null or undefined values
+          if (fieldValue === null || fieldValue === undefined) {
+            return false;
+          }
+
+          // Handle objects and primitive values differently
+          if (typeof fieldValue === 'object') {
+            // For objects, convert to string and check
+            return JSON.stringify(fieldValue)
+              .toLowerCase()
+              .includes(filterValue.toLowerCase());
+          } else {
+            // For primitive values, convert to string and check
+            return fieldValue
+              .toString()
+              .toLowerCase()
+              .includes(filterValue.toLowerCase());
+          }
+        });
+      }
+    });
+
+    this.filteredData = result;
+    this.table.value = this.filteredData;
+
+    // Reset to first page when filters change
+    if (this.table.first !== 0) {
+      this.table.first = 0;
+    }
+  }
+
+  flattenObject(obj: any, prefix = ''): string[] {
     const flattened: string[] = [];
 
     // Check if the value is an array or object
@@ -125,7 +225,7 @@ export class AppDynamicTableComponent
     return flattened;
   }
 
-  // 🔥 Get custom template for a column
+  // Get custom template for a column
   getColumnTemplate(templateId: string): any {
     if (!templateId) return null;
     const templateDir = this.columnTemplates?.find(
@@ -134,26 +234,44 @@ export class AppDynamicTableComponent
     return templateDir ? templateDir.template : null;
   }
 
+  // Enhanced getNestedValue to handle nested paths safely
   getNestedValue(obj: any, path: string): any {
-    return path.split('.').reduce((acc, key) => acc && acc[key], obj);
+    if (!obj || !path) return null;
+
+    try {
+      return path.split('.').reduce((acc, key) => {
+        // Handle case where acc is null or undefined
+        if (acc === null || acc === undefined) return null;
+        return acc[key];
+      }, obj);
+    } catch (error) {
+      console.error(`Error accessing path ${path} in object:`, obj, error);
+      return null;
+    }
   }
 
-  applyFilter = (value: string[]) => {
+  // This is the method that will be exposed to the template
+  // Make sure it's a property, not a method, to ensure proper binding
+  applyFilter = (value: string, field: string): void => {
     if (!this.table) return;
-    console.log('i am in apply filter');
-    this.applyGlobalFilter(value[0]);
+    console.log('Applying filter:', value, 'to field:', field);
+
+    if (field) {
+      // Field-specific filter
+      this.applyFieldFilter(field, value);
+    } else {
+      // Global filter
+      this.applyGlobalFilter(value);
+    }
   };
 
-  clearTable = (value: string) => {
-    console.log('Testing');
+  clearTable = (): void => {
+    console.log('Clearing table filters');
+    this.filterValue = '';
+    this.activeFilters.clear();
     this.table.reset();
     this.table.clearFilterValues();
     this.table.first = 0; // Reset to first page
-    this.filterService.filters['customFilter'] = (
-      value: string,
-      filter: string,
-    ): boolean => {
-      return true; // No filtering will happen, effectively resetting the filter
-    };
+    this.table.value = this.data; // Reset to original data
   };
 }

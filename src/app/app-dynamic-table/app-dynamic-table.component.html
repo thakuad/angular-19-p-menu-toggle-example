@@ -1,28 +1,38 @@
 <!-- Search Input Outside Table -->
-<div class="flex flex-row items-center justify-between"><input
-  #inputValue
-  (input)="applyGlobalFilter(inputValue.value)"
-  pInputText
-  placeholder="Search..."
-  type="text"
-/>
+<div class="flex flex-row items-center justify-between">
+  <input
+    #inputValue
+    (input)="applyGlobalFilter(inputValue.value)"
+    pInputText
+    placeholder="Search..."
+    type="text"
+  />
 
   <ng-container *ngIf="getColumnTemplate('filterTemplate');">
     <ng-container
-      [ngTemplateOutletContext]="{ $implicit: data, applyGlobalFilter: applyGlobalFilter, clearTable: clearTable }"
+      [ngTemplateOutletContext]="{
+        $implicit: data,
+        applyGlobalFilter: applyGlobalFilter,
+        applyFilter: applyFilter,
+        clearTable: clearTable,
+        activeFilters: activeFilters
+      }"
       [ngTemplateOutlet]="getColumnTemplate('filterTemplate'!)!"
     ></ng-container>
   </ng-container>
 
   <ng-container *ngIf="globalFilterTemplate">
     <ng-container
-      *ngTemplateOutlet="globalFilterTemplate; context: { applyFilter: applyFilter, clearTable: clearTable }">
+      *ngTemplateOutlet="globalFilterTemplate; context: {
+        applyFilter: applyFilter,
+        clearTable: clearTable,
+        activeFilters: activeFilters
+      }">
     </ng-container>
   </ng-container>
-  <button (click)="table.clearFilterValues()" pButton>Reset</button>
-
-
+  <button (click)="clearTable()" pButton>Reset</button>
 </div>
+
 <!-- PrimeNG Table -->
 <p-table
   #dt
@@ -63,3 +73,4 @@
     </tr>
   </ng-template>
 </p-table>
+
