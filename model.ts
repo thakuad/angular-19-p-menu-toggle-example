@@ -30,3 +30,19 @@ fetchOptions(): void {
     });
   }
 }
+
+
+fetchSessions() {
+    this.http.get<Session[]>('API_ENDPOINT_HERE')
+      .pipe(
+        map((sessions) => ({
+          sessionList: sessions.map(({ id, name, uuid }) => ({ id, name, uuid })),
+          addressList: sessions.flatMap(session => session.address)
+        }))
+      )
+      .subscribe(({ sessionList, addressList }) => {
+        this.sessionSubject.next(sessionList);
+        this.addressSubject.next(addressList);
+      });
+  }
+}
