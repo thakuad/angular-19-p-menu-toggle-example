@@ -26,6 +26,16 @@ interface FilterCriteria {
   value: string
 }
 
+// Update the column interface to include sortFunction
+interface Column {
+  field: string
+  header: string
+  sortable?: boolean
+  templateId?: string
+  sortField?: string // Field to use for sorting (if different from field)
+  sortFunction?: (item: any) => any // Function to extract sort value
+}
+
 @Component({
   selector: "app-dynamic-table",
   templateUrl: "./app-dynamic-table.component.html",
@@ -42,7 +52,7 @@ export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChange
 
   @ContentChild("globalFilterTemplate") globalFilterTemplate!: TemplateRef<any>
 
-  @Input() columns: any[] = []
+  @Input() columns: Column[] = []
   @Input() data: any[] = []
   @Input() globalFilter: string | string[] = [] // Accepts string or array
   @Input() initialFilterValue = ""
@@ -51,6 +61,9 @@ export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChange
   @Input() enableRowClick = false
   @Input() drawerPosition: "left" | "right" | "top" | "bottom" = "right"
   @Input() drawerStyleClass = "w-full md:w-30rem"
+
+  // New input to enable automatic template value extraction for sorting
+  @Input() autoExtractTemplateValues = true
 
   // Events
   @Output() rowSelected = new EventEmitter<any>()
@@ -70,6 +83,9 @@ export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChange
   // Drawer properties
   drawerVisible = false
   selectedRow: any = null
+
+  // Store extracted template values for sorting
+  private templateValues: Map<string, Map<string, any>> = new Map()
 
   constructor(private filterService: FilterService) {
     this.filterService.filters["customFilter"] = (value: string, filter: string): boolean => {
@@ -262,13 +278,41 @@ export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChange
     if (!obj || !path) return null
 
     try {
-      // Handle array notation in path (e.g., "items[0].name")
+      // Special case for direct array access with index notation: items[0]
+      const arrayIndexMatch = path.match(/^([^[]+)\[(\d+)\]$/)
+      if (arrayIndexMatch) {
+        const [_, arrayName, indexStr] = arrayIndexMatch
+        const index = Number.parseInt(indexStr, 10)
+        const array = obj[arrayName]
+
+        if (Array.isArray(array) && index < array.length) {
+          return array[index]
+        }
+        return null
+      }
+
+      // Handle nested array access: items[0].name
       const parts = path.split(/\.|\[|\]/).filter((p) => p)
       let result = obj
 
-      for (const part of parts) {
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i]
+
         if (result === null || result === undefined) return null
-        result = result[part]
+
+        // Check if the next part is a number (array index)
+        if (i + 1 < parts.length && !isNaN(Number(parts[i + 1]))) {
+          const arrayName = part
+          const index = Number.parseInt(parts[i + 1], 10)
+          i++ // Skip the next part since we've used it as an index
+
+          if (!Array.isArray(result[arrayName])) return null
+          if (index >= result[arrayName].length) return null
+
+          result = result[arrayName][index]
+        } else {
+          result = result[part]
+        }
       }
 
       return result
@@ -293,6 +337,86 @@ export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChange
     }
   }
 
+  // Method to extract value for sorting based on column configuration
+  getSortValue(item: any, column: Column): any {
+    // If column has a sort function, use it (highest priority)
+    if (column.sortFunction) {
+      return column.sortFunction(item)
+    }
+
+    // If column has a sort field, use it (second priority)
+    if (column.sortField) {
+      return this.getNestedValue(item, column.sortField)
+    }
+
+    // Get the base value from the field
+    const fieldValue = this.getNestedValue(item, column.field)
+
+    // If the field value is not an array or object, or is null/undefined, return it directly
+    if (
+      fieldValue === null ||
+      fieldValue === undefined ||
+      (typeof fieldValue !== "object" && !Array.isArray(fieldValue))
+    ) {
+      return fieldValue
+    }
+
+    // Handle array values dynamically
+    if (Array.isArray(fieldValue)) {
+      // Empty array case
+      if (fieldValue.length === 0) return ""
+
+      // If array contains objects, try to find the most relevant property
+      if (typeof fieldValue[0] === "object" && fieldValue[0] !== null) {
+        // Look for common name properties in the first object
+        const nameProps = ["name", "title", "label", "value", "text", "id"]
+        for (const prop of nameProps) {
+          if (fieldValue[0][prop] !== undefined) {
+            return fieldValue[0][prop]
+          }
+        }
+
+        // If no common property found, use the first property
+        const firstProp = Object.keys(fieldValue[0])[0]
+        if (firstProp) {
+          return fieldValue[0][firstProp]
+        }
+
+        // Last resort: stringify the object
+        return JSON.stringify(fieldValue[0])
+      }
+
+      // For arrays of primitives, join with comma or return first
+      if (fieldValue.length <= 3) {
+        return fieldValue.join(", ")
+      } else {
+        return fieldValue[0] + "..." // Show first item with ellipsis for long arrays
+      }
+    }
+
+    // Handle object values (non-array)
+    if (typeof fieldValue === "object") {
+      // For objects, try to find the most relevant property
+
+      // First, check for common value properties
+      const valueProps = ["value", "name", "title", "text", "label", "id", "type"]
+      for (const prop of valueProps) {
+        if (fieldValue[prop] !== undefined) {
+          return fieldValue[prop]
+        }
+      }
+
+      // If no common property found, use the first property
+      const firstProp = Object.keys(fieldValue)[0]
+      if (firstProp) {
+        return fieldValue[firstProp]
+      }
+    }
+
+    // If we get here, we couldn't extract a good value, so stringify the object
+    return JSON.stringify(fieldValue)
+  }
+
   // Add this method to handle custom sorting
   onSort(event: any): void {
     this.sortField = event.field
@@ -300,14 +424,41 @@ export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChange
 
     if (!this.table) return
 
-    // Custom sorting logic to handle nested properties
+    // Find the column definition
+    const column = this.columns.find((col) => col.field === event.field)
+    if (!column) return
+
+    // Custom sorting logic to handle nested properties and templates
     this.table.value = [...this.table.value].sort((a, b) => {
-      const valueA = this.getNestedValue(a, event.field)
-      const valueB = this.getNestedValue(b, event.field)
+      const valueA = this.getSortValue(a, column)
+      const valueB = this.getSortValue(b, column)
 
       // Handle null or undefined values
       if (valueA === null || valueA === undefined) return event.order * -1
       if (valueB === null || valueB === undefined) return event.order
+
+      // Handle array values
+      if (Array.isArray(valueA) && Array.isArray(valueB)) {
+        // Sort by array length if different
+        if (valueA.length !== valueB.length) {
+          return event.order * (valueA.length - valueB.length)
+        }
+
+        // Sort by comparing first elements
+        if (valueA.length > 0 && valueB.length > 0) {
+          const firstA = valueA[0]
+          const firstB = valueB[0]
+
+          if (typeof firstA === "string" && typeof firstB === "string") {
+            return event.order * firstA.localeCompare(firstB)
+          } else if (typeof firstA === "number" && typeof firstB === "number") {
+            return event.order * (firstA - firstB)
+          }
+        }
+
+        // Default array comparison
+        return event.order * (valueA.length - valueB.length)
+      }
 
       // Compare based on data type
       if (typeof valueA === "string" && typeof valueB === "string") {
