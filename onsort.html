@@ -1,0 +1,81 @@
+<!-- Search Input Outside Table -->
+<div class="flex flex-row items-center justify-between">
+  <input
+    #inputValue
+    [value]="filterValue"
+    (input)="applyGlobalFilter(inputValue.value)"
+    pInputText
+    placeholder="Search..."
+    type="text"
+  />
+
+  <ng-container *ngIf="getColumnTemplate('filterTemplate');">
+    <ng-container
+      [ngTemplateOutletContext]="{
+        $implicit: data,
+        applyGlobalFilter: applyGlobalFilter,
+        applyFilter: applyFilter,
+        clearTable: clearTable,
+        activeFilters: activeFilters
+      }"
+      [ngTemplateOutlet]="getColumnTemplate('filterTemplate'!)!"
+    ></ng-container>
+  </ng-container>
+
+  <ng-container *ngIf="globalFilterTemplate">
+    <ng-container
+      *ngTemplateOutlet="globalFilterTemplate; context: {
+        applyFilter: applyFilter,
+        clearTable: clearTable,
+        activeFilters: activeFilters
+      }">
+    </ng-container>
+  </ng-container>
+  <!-- Removed the Reset button from here -->
+</div>
+
+<!-- PrimeNG Table -->
+<p-table
+  #dt
+  [paginator]="true"
+  [rows]="10"
+  [value]="data"
+  [sortField]="sortField"
+  [sortOrder]="sortOrder"
+  [customSort]="true"
+  (onSort)="onSort($event)"
+>
+  <ng-template pTemplate="header">
+    <tr>
+      <th *ngFor="let col of columns" [pSortableColumn]="col.sortable ? col.field : undefined">
+        {{ col.header }}
+        <p-sortIcon *ngIf="col.sortable" [field]="col.field"></p-sortIcon>
+      </th>
+    </tr>
+  </ng-template>
+
+  <ng-template let-rowData pTemplate="body">
+    <tr>
+      <td *ngFor="let col of columns">
+        <ng-container *ngIf="getColumnTemplate(col.templateId); else defaultCell">
+          <ng-container
+            [ngTemplateOutletContext]="{ $implicit: rowData, column: col }"
+            [ngTemplateOutlet]="getColumnTemplate(col.templateId!)!"
+          ></ng-container>
+        </ng-container>
+        <ng-template #defaultCell>
+          {{ getNestedValue(rowData, col.field) }}
+        </ng-template>
+      </td>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="emptymessage">
+    <tr>
+      <td [attr.colspan]="columns.length" class="text-center">
+        No records found
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
