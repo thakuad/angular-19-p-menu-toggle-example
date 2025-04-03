@@ -10,13 +10,16 @@ import {
   type TemplateRef,
   type OnChanges,
   type SimpleChanges,
+  Output,
+  EventEmitter,
 } from "@angular/core"
 import { type Table, TableModule } from "primeng/table"
 import { FilterService } from "primeng/api"
 import { ColumnTemplateDirective } from "./column-template.directive"
 import { InputText } from "primeng/inputtext"
-import { NgForOf, NgIf, NgTemplateOutlet } from "@angular/common"
+import { NgForOf, NgIf, NgTemplateOutlet, NgClass } from "@angular/common"
 import { ButtonModule } from "primeng/button"
+import { SidebarModule } from "primeng/sidebar"
 
 interface FilterCriteria {
   field: string
@@ -29,7 +32,7 @@ interface FilterCriteria {
   styleUrls: ["./app-dynamic-table.component.css"],
   standalone: true,
   providers: [FilterService],
-  imports: [TableModule, InputText, NgForOf, NgIf, NgTemplateOutlet, ButtonModule],
+  imports: [TableModule, InputText, NgForOf, NgIf, NgTemplateOutlet, ButtonModule, SidebarModule, NgClass],
 })
 export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChanges {
   @ViewChild("dt") table!: Table
@@ -44,15 +47,29 @@ export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChange
   @Input() globalFilter: string | string[] = [] // Accepts string or array
   @Input() initialFilterValue = ""
 
+  // Drawer related inputs
+  @Input() enableRowClick = false
+  @Input() drawerPosition: "left" | "right" | "top" | "bottom" = "right"
+  @Input() drawerStyleClass = "w-full md:w-30rem"
+
+  // Events
+  @Output() rowSelected = new EventEmitter<any>()
+  @Output() drawerOpened = new EventEmitter<any>()
+  @Output() drawerClosed = new EventEmitter<void>()
+
   filteredData: any[] = []
   filterValue = ""
 
   // Store multiple filter criteria
   activeFilters: Map<string, string> = new Map()
 
-  // Add these properties to the class
+  // Sorting properties
   sortField = ""
   sortOrder = 1
+
+  // Drawer properties
+  drawerVisible = false
+  selectedRow: any = null
 
   constructor(private filterService: FilterService) {
     this.filterService.filters["customFilter"] = (value: string, filter: string): boolean => {
@@ -96,6 +113,20 @@ export class AppDynamicTableComponent implements OnInit, AfterViewInit, OnChange
         this.applyAllFilters()
       })
     }
+  }
+
+  // Row click handler
+  onRowClick(rowData: any): void {
+    this.selectedRow = rowData
+    this.drawerVisible = true
+    this.rowSelected.emit(rowData)
+    this.drawerOpened.emit(rowData)
+  }
+
+  // Method to close the drawer (can be called from templates)
+  closeDrawer = (): void => {
+    this.drawerVisible = false
+    this.drawerClosed.emit()
   }
 
   // Apply field-specific filter
