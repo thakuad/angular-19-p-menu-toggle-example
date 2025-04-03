@@ -31,7 +31,6 @@
       }">
     </ng-container>
   </ng-container>
-  <!-- Removed the Reset button from here -->
 </div>
 
 <!-- PrimeNG Table -->
@@ -55,7 +54,10 @@
   </ng-template>
 
   <ng-template let-rowData pTemplate="body">
-    <tr>
+    <tr 
+      [ngClass]="{'cursor-pointer': enableRowClick}" 
+      (click)="enableRowClick && onRowClick(rowData)"
+    >
       <td *ngFor="let col of columns">
         <ng-container *ngIf="getColumnTemplate(col.templateId); else defaultCell">
           <ng-container
@@ -78,4 +80,76 @@
     </tr>
   </ng-template>
 </p-table>
+
+<!-- Drawer Component -->
+<p-sidebar 
+  [(visible)]="drawerVisible" 
+  [position]="drawerPosition" 
+  [styleClass]="drawerStyleClass"
+  [dismissible]="true"
+  [showCloseIcon]="true"
+  [modal]="true"
+>
+  <ng-template [ngIf]="selectedRow">
+    <div class="p-3">
+      <!-- Default drawer header -->
+      <div *ngIf="!getColumnTemplate('drawerHeaderTemplate')" class="text-xl font-bold mb-4">
+        Row Details
+      </div>
+      
+      <!-- Custom drawer header template -->
+      <ng-container *ngIf="getColumnTemplate('drawerHeaderTemplate')">
+        <ng-container
+          [ngTemplateOutletContext]="{ $implicit: selectedRow }"
+          [ngTemplateOutlet]="getColumnTemplate('drawerHeaderTemplate')!"
+        ></ng-container>
+      </ng-container>
+      
+      <!-- Default drawer content -->
+      <div *ngIf="!getColumnTemplate('drawerContentTemplate')" class="grid grid-cols-1 gap-4">
+        <div *ngFor="let col of columns" class="mb-3">
+          <div class="font-semibold">{{ col.header }}</div>
+          <div>
+            <ng-container *ngIf="getColumnTemplate(col.templateId); else defaultDrawerValue">
+              <ng-container
+                [ngTemplateOutletContext]="{ $implicit: selectedRow, column: col }"
+                [ngTemplateOutlet]="getColumnTemplate(col.templateId!)!"
+              ></ng-container>
+            </ng-container>
+            <ng-template #defaultDrawerValue>
+              {{ getNestedValue(selectedRow, col.field) }}
+            </ng-template>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Custom drawer content template -->
+      <ng-container *ngIf="getColumnTemplate('drawerContentTemplate')">
+        <ng-container
+          [ngTemplateOutletContext]="{ $implicit: selectedRow, closeDrawer: closeDrawer }"
+          [ngTemplateOutlet]="getColumnTemplate('drawerContentTemplate')!"
+        ></ng-container>
+      </ng-container>
+      
+      <!-- Default drawer footer -->
+      <div *ngIf="!getColumnTemplate('drawerFooterTemplate')" class="mt-4 flex justify-end">
+        <button 
+          pButton 
+          label="Close" 
+          icon="pi pi-times" 
+          class="p-button-outlined" 
+          (click)="closeDrawer()"
+        ></button>
+      </div>
+      
+      <!-- Custom drawer footer template -->
+      <ng-container *ngIf="getColumnTemplate('drawerFooterTemplate')">
+        <ng-container
+          [ngTemplateOutletContext]="{ $implicit: selectedRow, closeDrawer: closeDrawer }"
+          [ngTemplateOutlet]="getColumnTemplate('drawerFooterTemplate')!"
+        ></ng-container>
+      </ng-container>
+    </div>
+  </ng-template>
+</p-sidebar>
 
