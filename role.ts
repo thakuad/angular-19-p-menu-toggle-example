@@ -20,6 +20,14 @@ export class UserRoleService {
   }
 
   hasRole(role: string): boolean {
-    return this.roles.includes(role);
-  }
-}
+    return this.roles.includes(import { provideRouter, withRouterConfig } from '@angular/router';
+
+bootstrapApplication(AppComponent, {
+  providers: [
+    provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' }))
+  ]
+});
+
+
+
+
