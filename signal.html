@@ -1,0 +1,78 @@
+<div class="compare-container p-grid">
+
+  <!-- LEFT COLUMN -->
+  <div class="p-col">
+    <input type="text" pInputText [ngModel]="leftSearch()" (ngModelChange)="leftSearch.set($event)" placeholder="Search Primary" />
+    <button pButton icon="pi pi-times" (click)="clearSearch('left')" class="p-ml-2"></button>
+
+    <div class="p-mt-2 p-d-flex p-jc-between p-ai-center">
+      <p-checkbox
+        [(ngModel)]="allLeftSelected()"
+        (ngModelChange)="allLeftSelected.set($event)"
+        binary="true"
+        label="Select All"
+      ></p-checkbox>
+      <button pButton label="Move Selected →" (click)="moveMultipleToSelected()" [disabled]="!leftSelected().length"></button>
+    </div>
+
+    <p-virtualScroller 
+      [value]="sortedFilteredPrimary()"
+      [itemSize]="50"
+      style="height:400px"
+      class="p-mt-2"
+    >
+      <ng-template let-item pTemplate="item">
+        <div class="item-row">
+          <p-checkbox
+            [value]="item"
+            [(ngModel)]="leftSelected()"
+            (onChange)="leftSelected.set($event.value)"
+            binary="true"
+          ></p-checkbox>
+          <span class="p-ml-2">{{ item.name }}</span>
+        </div>
+      </ng-template>
+    </p-virtualScroller>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="p-col">
+    <input type="text" pInputText [ngModel]="rightSearch()" (ngModelChange)="rightSearch.set($event)" placeholder="Search Selected" />
+    <button pButton icon="pi pi-times" (click)="clearSearch('right')" class="p-ml-2"></button>
+
+    <div class="p-mt-2 p-d-flex p-jc-between p-ai-center">
+      <p-checkbox
+        [(ngModel)]="allRightSelected()"
+        (ngModelChange)="allRightSelected.set($event)"
+        binary="true"
+        label="Select All"
+      ></p-checkbox>
+      <button pButton label="← Move Selected" (click)="moveMultipleToPrimary()" [disabled]="!rightSelected().length"></button>
+    </div>
+
+    <p-virtualScroller 
+      [value]="sortedFilteredSelected()"
+      [itemSize]="50"
+      style="height:400px"
+      class="p-mt-2"
+    >
+      <ng-template let-item pTemplate="item">
+        <div class="item-row">
+          <p-checkbox
+            [value]="item"
+            [(ngModel)]="rightSelected()"
+            (onChange)="rightSelected.set($event.value)"
+            binary="true"
+          ></p-checkbox>
+          <span class="p-ml-2">{{ item.name }}</span>
+        </div>
+      </ng-template>
+    </p-virtualScroller>
+  </div>
+</div>
+
+<!-- Save / Reset Buttons -->
+<div class="p-mt-3 p-d-flex p-jc-end p-gap-2">
+  <button pButton label="Reset" (click)="resetSelection()" [disabled]="!hasChanges()"></button>
+  <button pButton label="Save Changes" [disabled]="!hasChanges()"></button>
+</div>
