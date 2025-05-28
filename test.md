@@ -9,3 +9,21 @@ Rather than copying over the existing implementation, I’ve opted to simplify t
 I’ve documented the changes and approaches in a shared document. Please feel free to review it and share your feedback or suggestions.
 
 Thank you!
+
+
+
+
+Subject: Request for Feedback on Array Handling Improvements in Next-Gen UI
+
+Hi Team,
+
+As part of the transition from the old Nish UI to the next-gen UI, I’ve come across some complex array manipulation, filtering, and sorting logic in the frontend.
+
+Instead of copying the existing code, I’ve refactored these parts using Lodash to improve clarity and reduce complexity.
+
+I’ve documented the new approach in a shared doc. Please take a moment to review it and share your feedback.
+
+Thanks in advance!
+
+Best,
+[Your Name]
