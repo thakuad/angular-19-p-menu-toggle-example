@@ -9,11 +9,13 @@ import {SidebarComponent} from './sidebar/sidebar.component';
 import { NgIf} from '@angular/common';
 import {MenuService} from '../services/menu.service';
 import {ThemeService} from '../config/theme.service';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+
 
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [ButtonModule, TextareaModule, InputTextModule, MenubarModule, TopHeaderComponent, SidebarComponent, RouterOutlet, NgIf],
+  imports: [ButtonModule, TextareaModule, InputTextModule, MenubarModule, TopHeaderComponent, SidebarComponent, RouterOutlet, NgIf, ConfirmDialogModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })

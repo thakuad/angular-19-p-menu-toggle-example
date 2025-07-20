@@ -1,27 +1,29 @@
 <div class="flex flex-col h-screen">
+  <h1>Hello, {{ title }}</h1>
+
   <!-- Top Header - Fixed at the top -->
   <div class="border border-green-500 mb-5">
-    <app-top-header [toggleDarkMode]="toggleDarkMode.bind(this)"/>
+    <app-top-header [toggleDarkMode]="toggleDarkMode.bind(this)" />
   </div>
 
   <!-- Content Section -->
   <div class="flex flex-row gap-5 flex-1 overflow-hidden">
-
     <!-- Sidebar (Hidden on small screens and visible on larger screens) -->
     <aside
       *ngIf="sidebarVisible"
-      class="lg:w-72 w-0 lg:flex hidden border border-red-500 h-full overflow-y-auto transition-all duration-300 ease-in-out">
+      class="lg:w-72 w-0 lg:flex hidden border border-red-500 h-full overflow-y-auto transition-all duration-300 ease-in-out"
+    >
       <app-sidebar />
     </aside>
 
     <!-- Main Content -->
-    <main class="bg-gray-50 flex flex-col  w-full overflow-auto relative">
-
+    <main class="bg-gray-50 flex flex-col w-full overflow-auto relative">
       <!-- Button to toggle sidebar visibility on small screens -->
 
-
       <!-- Main content -->
-      <router-outlet/>
+      <router-outlet />
+
+      <p-confirm-dialog key="main" />
     </main>
   </div>
 </div>
