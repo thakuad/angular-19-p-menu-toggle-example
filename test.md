@@ -36,3 +36,24 @@ describe('YourComponent', () => {
     expect(window.location.reload).toHaveBeenCalled();
   }));
 });
+
+
+it('should NOT reload the window if navigation fails', fakeAsync(() => {
+  routerSpy.navigate.and.returnValue(Promise.resolve(false));
+  spyOn(window.location, 'reload');
+
+  component.redirect();
+  tick();
+
+  expect(routerSpy.navigate).toHaveBeenCalled();
+  expect(window.location.reload).not.toHaveBeenCalled();
+}));
+
+
+it('should call redirect() when button is clicked', () => {
+  spyOn(component, 'redirect');
+  const button = fixture.nativeElement.querySelector('button');
+  button.click();
+  expect(component.redirect).toHaveBeenCalled();
+});
+
