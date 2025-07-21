@@ -1,29 +1,38 @@
-Subject: Feedback Request: Array Manipulation & UI Transition Improvements
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { YourComponent } from './your.component';
+import { Router } from '@angular/router';
 
-Hi Team,
+describe('YourComponent', () => {
+  let component: YourComponent;
+  let fixture: ComponentFixture<YourComponent>;
+  let routerSpy: jasmine.SpyObj<Router>;
 
-As you’re aware, I’m currently in the process of transitioning the old Nish UI to the next-gen UI. During this migration, I’ve encountered some complex logic related to array manipulation, filtering, and sorting in the frontend.
+  beforeEach(async () => {
+    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
-Rather than copying over the existing implementation, I’ve opted to simplify this logic using Lodash in the next-gen version to improve readability and maintainability.
+    await TestBed.configureTestingModule({
+      declarations: [YourComponent],
+      providers: [
+        { provide: Router, useValue: routerSpy }
+      ]
+    }).compileComponents();
 
-I’ve documented the changes and approaches in a shared document. Please feel free to review it and share your feedback or suggestions.
+    fixture = TestBed.createComponent(YourComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
 
-Thank you!
+  it('should call navigate and then reload the window', fakeAsync(() => {
+    // Arrange
+    routerSpy.navigate.and.returnValue(Promise.resolve(true));
+    spyOn(window.location, 'reload');
 
+    // Act
+    component.redirect(); // or simulate button click
+    tick(); // simulate passage of async time
 
-
-
-Subject: Request for Feedback on Array Handling Improvements in Next-Gen UI
-
-Hi Team,
-
-As part of the transition from the old Nish UI to the next-gen UI, I’ve come across some complex array manipulation, filtering, and sorting logic in the frontend.
-
-Instead of copying the existing code, I’ve refactored these parts using Lodash to improve clarity and reduce complexity.
-
-I’ve documented the new approach in a shared doc. Please take a moment to review it and share your feedback.
-
-Thanks in advance!
-
-Best,
-[Your Name]
+    // Assert
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/some-path']);
+    expect(window.location.reload).toHaveBeenCalled();
+  }));
+});
