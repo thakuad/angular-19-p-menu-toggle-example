@@ -6,6 +6,7 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
+import { AppDynamicTableComponent_1 as AppDynamicTableComponent } from "../table-test/table-test.component";
 
 interface TableData {
   id: string;
@@ -37,7 +38,8 @@ export interface User {
     ColumnTemplateDirective,
     SelectModule,
     FormsModule,
-  ],
+    AppDynamicTableComponent_1
+],
   templateUrl: './about-us.component.html',
   styleUrls: ['./about-us.component.css'],
 })

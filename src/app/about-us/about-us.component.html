@@ -1,27 +1,35 @@
 <div class="p-4">
-  <app-dynamic-table
-    #dt
-    [columns]="columns"
-    [data]="allData"
-  >
-    <ng-template appColumnTemplate="filterTemplate" let-activeFilters="activeFilters" let-applyFilter="applyFilter" let-clearTable="clearTable" let-data>
+  <app-dynamic-table #dt [columns]="columns" [data]="allData">
+    <ng-template
+      appColumnTemplate="filterTemplate"
+      let-activeFilters="activeFilters"
+      let-applyFilter="applyFilter"
+      let-clearTable="clearTable"
+      let-data
+    >
       <div class="flex items-center gap-4">
         <div class="flex gap-2">
-          <p-select #selectedValue
-                    (onChange)="selectedUser && applyFilter('John Doe', 'owner')"
-                    [(ngModel)]="selectedUser"
-                    [options]="users"
-                    class="w-full md:w-56"
-                    optionLabel="name"
-                    placeholder="Select a User"/>
+          <p-select
+            #selectedValue
+            (onChange)="selectedUser && applyFilter('John Doe', 'owner')"
+            [(ngModel)]="selectedUser"
+            [options]="users"
+            class="w-full md:w-56"
+            optionLabel="name"
+            placeholder="Select a User"
+          />
 
-          <p-select #status
-                    (onChange)="selectedStatus && applyFilter(selectedStatus.name, 'status.type')"
-                    [(ngModel)]="selectedStatus"
-                    [options]="statusSelect"
-                    class="w-full md:w-56"
-                    optionLabel="name"
-                    placeholder="Select a status"/>
+          <p-select
+            #status
+            (onChange)="
+              selectedStatus && applyFilter(selectedStatus.name, 'status.type')
+            "
+            [(ngModel)]="selectedStatus"
+            [options]="statusSelect"
+            class="w-full md:w-56"
+            optionLabel="name"
+            placeholder="Select a status"
+          />
         </div>
 
         <!-- Pretty Reset Button -->
@@ -36,14 +44,21 @@
     </ng-template>
 
     <ng-template appColumnTemplate="statusTemplate" let-rowData>
-      <span [ngClass]="{
-        'p-tag p-tag-success': rowData.status.type === 'Completed',
-        'p-tag p-tag-warning': rowData.status.type === 'In Progress',
-        'p-tag p-tag-danger': rowData.status.type === 'Pending'
-      }">
+      <span
+        [ngClass]="{
+          'p-tag p-tag-success': rowData.status.type === 'Completed',
+          'p-tag p-tag-warning': rowData.status.type === 'In Progress',
+          'p-tag p-tag-danger': rowData.status.type === 'Pending',
+        }"
+      >
         {{ rowData.status.type }}
       </span>
     </ng-template>
   </app-dynamic-table>
 </div>
 
+<table-test
+  [columns]="columns"
+  [data]="allData"
+  [globalFilterFields]="['owner', 'status.type']"
+/>

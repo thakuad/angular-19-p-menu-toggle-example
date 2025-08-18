@@ -1,0 +1,53 @@
+<p-table
+  #dt
+  [value]="data"
+  [globalFilterFields]="globalFilterFields"
+  [paginator]="true"
+  [rows]="10"
+>
+  <!-- Global Search -->
+  <ng-template pTemplate="caption">
+    <span class="p-input-icon-left">
+      <i class="pi pi-search"></i>
+      <input
+        #search
+        pInputText
+        type="text"
+        (input)="dt.filterGlobal(search.value, 'nestedArrayContains')"
+        placeholder="Global Search"
+      />
+    </span>
+  </ng-template>
+
+  <!-- Header -->
+  <ng-template pTemplate="header">
+    <tr>
+      <th
+        *ngFor="let col of columns"
+        [pSortableColumn]="col.sortable ? col?.field : ''"
+      >
+        {{ col.header }}
+        <p-sortIcon *ngIf="col.sortable" [field]="col.field"></p-sortIcon>
+      </th>
+    </tr>
+  </ng-template>
+
+  <!-- Body -->
+  <ng-template pTemplate="body" let-row>
+    <tr>
+      <td *ngFor="let col of columns">
+        <ng-container *ngIf="!getColumnTemplate(col.field); else custom">
+          {{ row[col.field] }}
+        </ng-container>
+        <ng-template #custom>
+          <ng-container
+            *ngTemplateOutlet="
+              getColumnTemplate(col.field);
+              context: { $implicit: row }
+            "
+          />
+        </ng-template>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
