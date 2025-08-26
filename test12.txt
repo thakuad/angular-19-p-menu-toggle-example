@@ -1,0 +1,120 @@
+Got it! You want to set up OpenTelemetry in an Angular 20 project, initially just logging traces to the console, and later replacing the exporter with a backend URL. I’ll give you a complete setup.
+
+⸻
+
+Step 1: Install OpenTelemetry Packages
+
+For Angular (browser), install the following:
+
+npm install @opentelemetry/api @opentelemetry/sdk-trace-web @opentelemetry/instrumentation @opentelemetry/instrumentation-document-load @opentelemetry/instrumentation-user-interaction @opentelemetry/instrumentation-fetch @opentelemetry/instrumentation-xml-http-request @opentelemetry/sdk-trace-base
+
+Optional for future HTTP/GRPC exporters:
+
+npm install @opentelemetry/exporter-otlp-http
+
+
+⸻
+
+Step 2: Create an OpenTelemetry Initialization File
+
+Create a file: src/app/opentelemetry-setup.ts
+
+import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
+import { ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-document-load';
+import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-user-interaction';
+import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
+import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
+
+// 1. Create a tracer provider
+const provider = new WebTracerProvider();
+
+// 2. Setup a console exporter (for now)
+const consoleExporter = new ConsoleSpanExporter();
+provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
+
+// 3. Register the provider globally
+provider.register();
+
+// 4. Auto-instrument common browser events
+registerInstrumentations({
+  instrumentations: [
+    new DocumentLoadInstrumentation(),
+    new UserInteractionInstrumentation(),
+    new FetchInstrumentation(),
+    new XMLHttpRequestInstrumentation()
+  ],
+});
+
+// 5. Get a tracer instance
+export const tracer = provider.getTracer('angular-otel-tracer');
+
+
+⸻
+
+Step 3: Import OpenTelemetry in main.ts
+
+In src/main.ts, initialize OpenTelemetry before bootstrapping Angular:
+
+import './app/opentelemetry-setup';
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+
+bootstrapApplication(AppComponent)
+  .catch(err => console.error(err));
+
+
+⸻
+
+Step 4: Manually Create Traces in Angular
+
+You can now trace custom actions. Example in a component:
+
+import { Component } from '@angular/core';
+import { tracer } from './opentelemetry-setup';
+
+@Component({
+  selector: 'app-root',
+  template: `<button (click)="doSomething()">Click Me</button>`
+})
+export class AppComponent {
+  doSomething() {
+    const span = tracer.startSpan('button-click');
+    console.log('Doing something traced');
+
+    // Simulate async work
+    setTimeout(() => {
+      span.end(); // Finish span
+    }, 500);
+  }
+}
+
+Now every span (like button-click) will log to the console.
+
+⸻
+
+✅ Step 5: Future Export to Backend
+
+When ready to export to a URL (OTLP endpoint), replace ConsoleSpanExporter with OTLPTraceExporter:
+
+import { OTLPTraceExporter } from '@opentelemetry/exporter-otlp-http';
+
+const otlpExporter = new OTLPTraceExporter({
+  url: 'https://your-backend-url.com/v1/traces'
+});
+provider.addSpanProcessor(new SimpleSpanProcessor(otlpExporter));
+
+
+⸻
+
+Step 6: Notes
+	•	OpenTelemetry for the browser is limited by CORS if sending to backend. You’ll need your backend to accept OTLP HTTP requests.
+	•	You can also add Angular-specific instrumentation (e.g., routing spans) later.
+	•	SimpleSpanProcessor is good for dev/testing. For production, use BatchSpanProcessor.
+
+⸻
+
+If you want, I can also show a ready-to-use Angular 20 service that automatically traces all HTTP requests and router navigation with OpenTelemetry, so you don’t have to manually add spans.
+
+Do you want me to do that?
