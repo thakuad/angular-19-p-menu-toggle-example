@@ -1,0 +1,116 @@
+Perfect 👍 Angular 15+ (including Angular 20) encourages central configuration via app.config.ts rather than doing things in main.ts. We can absolutely put the OpenTelemetry bootstrap there so the whole app gets instrumented when Angular starts.
+
+Here’s the best practice app.config.ts setup:
+
+⸻
+
+1. app.config.ts
+
+import { ApplicationConfig } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { routes } from './app.routes';
+
+// OpenTelemetry imports
+import { WebTracerProvider } from '@opentelemetry/sdk-trace-web';
+import { ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-document-load';
+import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-user-interaction';
+import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
+import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
+import { Resource } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+
+// --- OpenTelemetry Setup ---
+const provider = new WebTracerProvider({
+  resource: new Resource({
+    [SemanticResourceAttributes.SERVICE_NAME]: 'angular-otel-app',
+    [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: 'development',
+  }),
+});
+
+const consoleExporter = new ConsoleSpanExporter();
+provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
+provider.register();
+
+// Auto instrumentations
+registerInstrumentations({
+  instrumentations: [
+    new DocumentLoadInstrumentation(),
+    new UserInteractionInstrumentation(),
+    new FetchInstrumentation({
+      propagateTraceHeaderCorsUrls: [/./],
+    }),
+    new XMLHttpRequestInstrumentation({
+      propagateTraceHeaderCorsUrls: [/./],
+    }),
+  ],
+});
+
+// Export tracer if you want manual spans
+export const tracer = provider.getTracer('angular-otel-tracer');
+
+// --- Angular App Config ---
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(routes),
+  ],
+};
+
+
+⸻
+
+2. main.ts
+
+Now main.ts just bootstraps Angular normally:
+
+import { bootstrapApplication } from '@angular/platform-browser';
+import { AppComponent } from './app/app.component';
+import { appConfig } from './app/app.config';
+
+bootstrapApplication(AppComponent, appConfig)
+  .catch(err => console.error(err));
+
+
+⸻
+
+3. Router Tracing (Optional Service)
+
+If you also want route spans, add this once:
+
+// src/app/otel-router-tracer.service.ts
+import { Injectable } from '@angular/core';
+import { Router, NavigationStart, NavigationEnd } from '@angular/router';
+import { tracer } from './app.config';
+import { Span } from '@opentelemetry/api';
+
+@Injectable({ providedIn: 'root' })
+export class OtelRouterTracer {
+  private activeSpan: Span | null = null;
+
+  constructor(private router: Router) {
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.activeSpan = tracer.startSpan(`route:${event.url}`);
+      } else if (event instanceof NavigationEnd && this.activeSpan) {
+        this.activeSpan.end();
+        this.activeSpan = null;
+      }
+    });
+  }
+}
+
+And inject it once in AppComponent constructor so it activates.
+
+⸻
+
+✅ With this setup:
+	•	HttpClient auto-traced (via XHR instrumentation)
+	•	Router changes traced (via service)
+	•	Page load + user interaction traced
+	•	All spans logged to console now
+	•	Swap to OTLPTraceExporter + BatchSpanProcessor later for production
+
+⸻
+
+Would you like me to extend this so that the OTel setup is provided as an Angular provider (e.g., provideOtel()) in app.config.ts, instead of running inline? That way you can enable/disable or swap exporters cleanly per environment.
