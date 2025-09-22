@@ -1,3 +1,105 @@
+import { Injectable, signal, resource, Signal } from '@angular/core';
+import { IUserService, User } from './user.service.interface';
+
+@Injectable({ providedIn: 'root' })
+export class UserService implements IUserService {
+  users: Signal<User[]> = signal([]);
+  protected usersData: User[] = [];
+
+  protected readonly baseUrl = 'https://jsonplaceholder.typicode.com/users';
+
+  protected getResource = resource({
+    loader: async (): Promise<User[]> => {
+      const res = await fetch(this.baseUrl);
+      if (!res.ok) throw new Error('GET failed');
+      return (await res.json()) as User[];
+    },
+  });
+
+  protected postResource = resource({
+    loader: async (user: User): Promise<User> => {
+      const res = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+      });
+      if (!res.ok) throw new Error('POST failed');
+      return (await res.json()) as User;
+    },
+  });
+
+  protected putResource = resource({
+    loader: async (user: User): Promise<User> => {
+      const res = await fetch(`${this.baseUrl}/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user),
+      });
+      if (!res.ok) throw new Error('PUT failed');
+      return (await res.json()) as User;
+    },
+  });
+
+  protected patchResource = resource({
+    loader: async (input: { id: number; patch: Partial<User> }): Promise<User> => {
+      const res = await fetch(`${this.baseUrl}/${input.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input.patch),
+      });
+      if (!res.ok) throw new Error('PATCH failed');
+      return (await res.json()) as User;
+    },
+  });
+
+  protected deleteResource = resource({
+    loader: async (id: number): Promise<{ success: true }> => {
+      const res = await fetch(`${this.baseUrl}/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('DELETE failed');
+      return { success: true };
+    },
+  });
+
+  async loadUsers(): Promise<User[]> {
+    this.usersData = await this.getResource.load();
+    this.users.set([...this.usersData]);
+    return this.usersData;
+  }
+
+  async addUser(user: User): Promise<void> {
+    const created = await this.postResource.load(user);
+    this.usersData.push(created);
+    this.users.set([...this.usersData]);
+  }
+
+  async updateUser(user: User): Promise<void> {
+    const updated = await this.putResource.load(user);
+    const index = this.usersData.findIndex(u => u.id === updated.id);
+    if (index >= 0) this.usersData[index] = updated;
+    this.users.set([...this.usersData]);
+  }
+
+  async patchUser(id: number, partial: Partial<User>): Promise<void> {
+    const patched = await this.patchResource.load({ id, patch: partial });
+    const index = this.usersData.findIndex(u => u.id === patched.id);
+    if (index >= 0) this.usersData[index] = patched;
+    this.users.set([...this.usersData]);
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await this.deleteResource.load(id);
+    this.usersData = this.usersData.filter(u => u.id !== id);
+    this.users.set([...this.usersData]);
+  }
+
+  getUser(id: number): User | undefined {
+    return this.usersData.find(u => u.id === id);
+  }
+}
+####
+
+
+
 import { UserService } from './user.service';
 import { User } from './user.service.interface';
 
