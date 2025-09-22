@@ -1,3 +1,41 @@
+import { UserService } from './user.service';
+import { User } from './user.service.interface';
+
+/**
+ * Delegating fake service.
+ * Overrides only the resources, all methods come from original UserService.
+ */
+export class UserServiceFake extends UserService {
+  constructor() {
+    super();
+
+    // --- Mock GET ---
+    this.getResource = { load: async (): Promise<User[]> => [
+      { id: 1, name: 'Fake Alice', password: 'xxx' },
+      { id: 2, name: 'Fake Bob', password: 'yyy' },
+    ]};
+
+    // --- Mock POST ---
+    this.postResource = { load: async (user: User): Promise<User> => ({
+      ...user,
+      id: Math.floor(Math.random() * 1000),
+    })};
+
+    // --- Mock PUT ---
+    this.putResource = { load: async (user: User): Promise<User> => user };
+
+    // --- Mock PATCH ---
+    this.patchResource = { load: async (input: { id: number; patch: Partial<User> }): Promise<User> => {
+      const existing = this.usersData.find(u => u.id === input.id);
+      return existing ? { ...existing, ...input.patch } : { id: input.id, name: '', password: '' };
+    }};
+
+    // --- Mock DELETE ---
+    this.deleteResource = { load: async (): Promise<{ success: true }> => ({ success: true }) };
+  }
+}
+######
+
 import { TestBed } from '@angular/core/testing';
 import { UserService } from './user.service';
 import { UserServiceFake } from './user.service.fake';
