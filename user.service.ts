@@ -1,3 +1,20 @@
+export interface User {
+  id: number;
+  name: string;
+  password: string;
+}
+
+export interface IUserService {
+  users: Signal<User[]>;
+
+  loadUsers(): Promise<User[]>;
+  addUser(user: User): Promise<void>;
+  updateUser(user: User): Promise<void>;
+  patchUser(id: number, partial: Partial<User>): Promise<void>;
+  deleteUser(id: number): Promise<void>;
+  getUser(id: number): User | undefined;
+}
+###
 import { Injectable, signal, resource, Signal } from '@angular/core';
 import { IUserService, User } from './user.service.interface';
 
